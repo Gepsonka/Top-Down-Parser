@@ -1,7 +1,19 @@
 #include "parser.h"
 
-TopDownParser::TopDownParser(const std::string& raw_rules){
+TopDownParser::TopDownParser(const std::string raw_rules, const std::string input):input_word(input){
     read_rules(raw_rules);
+
+}
+
+void TopDownParser::print_rules_content() {
+    std::cout<<"Rules:"<<std::endl;
+    for (const auto x : extract_rule_symbols()){
+        std::cout<<x<<" -> ";
+        for (const auto y : rules[x]){
+            std::cout<<y<<", ";
+        }
+        std::cout<<std::endl;
+    }
 }
 
 
@@ -16,7 +28,7 @@ void TopDownParser::read_rules(const std::string &raw_rules){
             after_arrow=true;
         } 
         else if (raw_rules[i]==' '){
-            rules[curr_symbol]->push_back(curr_rule);
+            rules[curr_symbol].push_back(curr_rule);
             curr_rule=curr_symbol="";
             after_arrow=false;
         }
@@ -39,23 +51,30 @@ void TopDownParser::read_rules(const std::string &raw_rules){
             if (toupper(raw_rules[i])==raw_rules[i]){
                 if (curr_symbol==""){
                     curr_symbol=raw_rules[i];
-
-                    std::vector<std::string> keys=extract_rule_symbols();
-                    if (std::find(keys.begin(), keys.end(), curr_symbol)!=keys.end()){
-                        rules[curr_symbol]=std::make_unique<std::vector<std::string>>();
-                    }
                 }
                 else {
-                    std::cerr<<"Cannot give more than 1 symbols (S>adeSxa is valid, Sk>fnmekSlsS or SL>kjdfSlsK is not)"<<std::endl;
+                    std::cerr<<"Cannot give more than 1 symbols in one rule (S>adeSxa is valid, Sk>fnmekSlsS or SL>kjdfSlsK is not)"<<std::endl;
                     exit(-1);
                 }
             }
             else {
-                std::cerr<<"Symbol cannot be terminal (lower case character): "<<raw_rules[i]<<std::endl;
+                std::cerr<<"Symbol cannot be a terminal (lower case character): "<<raw_rules[i]<<std::endl;
                 exit(-1);
             }
 
         }
+    }
+
+    if (curr_rule!="" && curr_symbol!=""){
+        rules[curr_symbol].push_back(curr_rule);
+        curr_rule=curr_symbol="";
+        after_arrow=false;
+    }
+
+    std::vector<std::string> symbols=extract_rule_symbols();
+    if(std::find(symbols.begin(), symbols.end(),"S")==symbols.end()){
+        std::cerr<<"Starting symbol is required! (S)"<<std::endl;
+        exit(-1);
     }
 }
 

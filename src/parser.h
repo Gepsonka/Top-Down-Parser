@@ -24,9 +24,18 @@ class TopDownParser{
         std::stack<std::string> alpha;
         std::stack<std::string> beta;
 
+        // divide the operations into levels to make backtrack easier
+        unsigned int level;
+
+        // helping in the backtrack keeping track of which alternative are we using
+        // currently
+        // in case of backtrack we only increase this number to try
+        // the next alternative of the sybol
+        unsigned int symbol_alternative;
+
     };
 
-    std::map<std::string,std::unique_ptr<std::vector<std::string>>> rules;
+    std::map<std::string,std::vector<std::string>> rules;
 
     void read_rules(const std::string &raw_rules);
     std::vector<std::string> extract_rule_symbols() const; // extract the key element from the rules
@@ -45,10 +54,8 @@ class TopDownParser{
 
 public:
 
-    TopDownParser(const std::string& raw_rules);
-
-
-
+    TopDownParser(const std::string raw_rules, const std::string input);
+    void print_rules_content();
 
 };
 
