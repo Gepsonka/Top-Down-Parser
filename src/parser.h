@@ -20,9 +20,9 @@ class TopDownParser{
 
     struct ParsingState{
         StateofAnalysis state;
-        std::string i; // pointer in the input word
+        unsigned int i; // pointer in the input word
         std::stack<std::string> alpha;
-        std::stack<std::string> beta;
+        std::string beta;
 
         // divide the operations into levels to make backtrack easier
         unsigned int level;
@@ -33,6 +33,12 @@ class TopDownParser{
         // the next alternative of the sybol
         unsigned int symbol_alternative;
 
+        ParsingState()=default;
+        ParsingState(const ParsingState* ps); // copy constructor
+        static ParsingState* new_parsing_state();
+        static ParsingState* copy(const ParsingState* ps);
+        // TODO: Make the instances printable
+        void print_instance(); // implement!!
     };
 
     std::map<std::string,std::vector<std::string>> rules;
@@ -41,9 +47,11 @@ class TopDownParser{
     std::vector<std::string> extract_rule_symbols() const; // extract the key element from the rules
 
 
-    std::vector<ParsingState> list_of_states; // for backtrack purposes
+    std::vector<ParsingState*> list_of_states; // for backtrack purposes
     
-    bool match_input();
+    void start_parsing();
+    void match_input();
+    void extend(std::string non_terminal, unsigned int num_of_alternative);
     bool backtrack_in_extension();
     bool backtrack_in_input();
     void successful_matching();
@@ -55,6 +63,7 @@ class TopDownParser{
 public:
 
     TopDownParser(const std::string raw_rules, const std::string input);
+    ~TopDownParser();
     void print_rules_content();
 
 };
