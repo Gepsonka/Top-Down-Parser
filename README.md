@@ -13,12 +13,12 @@ The input format has to keep the followind rules:
 
 ### Compile & Link
 
-g++ -c src/*.cpp && g++ *.o -o main
+```g++ -c src/*.cpp && g++ *.o -o main```
 
 
 ### Run
 
-In the base directory run: ./main 
+In the base directory run: ```./main```
 
 
 *written and tested for linux*
