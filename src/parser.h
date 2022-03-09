@@ -33,13 +33,18 @@ class TopDownParser{
         // the next alternative of the sybol
         unsigned int symbol_alternative;
 
-        ParsingState()=default;
+        ParsingState();
         ParsingState(const ParsingState* ps); // copy constructor
         static ParsingState* new_parsing_state();
         static ParsingState* copy(const ParsingState* ps);
-        // TODO: Make the instances printable
-        void print_instance(); // implement!!
+        void print_instance_to_std_err();
     };
+
+    std::vector<char> capitals={'Q','W','E','R','T','Y','U','I','O','P',
+                                'A','S','D','F','G','H','J','K','L','Z','X','C',
+                                'V','B','N','M'};
+    bool is_capital(char letter);
+    
 
     std::map<std::string,std::vector<std::string>> rules;
 
@@ -52,8 +57,8 @@ class TopDownParser{
     void start_parsing();
     void match_input();
     void extend(std::string non_terminal, unsigned int num_of_alternative);
-    bool backtrack_in_extension();
-    bool backtrack_in_input();
+    void backtrack_in_extension();
+    void backtrack_in_input();
     void successful_matching();
     void unsuccessful_matching();
 

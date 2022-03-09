@@ -2,6 +2,7 @@
 
 TopDownParser::TopDownParser(const std::string raw_rules, const std::string input):input_word(input){
     read_rules(raw_rules);
+    start_parsing();
 
 }
 
@@ -39,6 +40,36 @@ TopDownParser::ParsingState* TopDownParser::ParsingState::copy(const ParsingStat
     return copy_ptr;
 }
 
+
+void TopDownParser::ParsingState::print_instance_to_std_err(){
+    std::string st;
+    switch(state){
+        case TopDownParser::StateofAnalysis::Q:
+            st="normal";
+            break;
+        case TopDownParser::StateofAnalysis::T:
+            st="accept";
+            break;
+        case TopDownParser::StateofAnalysis::B:
+            st="backtrack";
+            break;
+        
+    }
+
+
+    std::string alpha_top_string=alpha.top();
+    
+    std::cerr<<"Parser instance: "<<std::endl;
+
+    std::cerr<<"state: "<<st<<std::endl;
+    std::cerr<<"i: "<<i<<std::endl;
+    std::cerr<<"alpha stack top element: "<<alpha_top_string<<std::endl;
+    std::cerr<<"beta str: "<<beta<<std::endl;
+    std::cerr<<"level: "<<level<<std::endl;
+    std::cerr<<"symbol alternative: "<<symbol_alternative<<std::endl<<std::endl;
+
+}
+
 void TopDownParser::print_rules_content() {
     std::cout<<"Rules:"<<std::endl;
     for (const auto x : extract_rule_symbols()){
@@ -50,6 +81,13 @@ void TopDownParser::print_rules_content() {
     }
 }
 
+bool TopDownParser::is_capital(char letter){
+    if (std::find(capitals.begin(),capitals.end(),letter)==capitals.end()){
+        return false;
+    }
+
+    return true;
+}
 
 
 void TopDownParser::read_rules(const std::string &raw_rules){
@@ -68,21 +106,11 @@ void TopDownParser::read_rules(const std::string &raw_rules){
         }
 
         else if (after_arrow){
-            if (std::toupper(raw_rules[i])==raw_rules[i]){
-                if (raw_rules.find(raw_rules[i]+">")==std::string::npos){
-                    std::cerr<<"Error: Nothing comes from "<<raw_rules[i]<<std::endl;
-                    exit(-1);
-                }
-                else {
-                    curr_rule+=raw_rules[i];
-                }
-            }
-            else {
-                curr_rule+=raw_rules[i];
-            }
+            curr_rule+=raw_rules[i];
+                
         } 
         else {
-            if (toupper(raw_rules[i])==raw_rules[i]){
+            if (is_capital(raw_rules[i])){
                 if (curr_symbol==""){
                     curr_symbol=raw_rules[i];
                 }
@@ -110,7 +138,21 @@ void TopDownParser::read_rules(const std::string &raw_rules){
         std::cerr<<"Starting symbol is required! (S)"<<std::endl;
         exit(-1);
     }
+
+    for (const auto symb: extract_rule_symbols()){
+        for (const auto rule:rules[symb]){
+            for (const auto rule_char:rule){
+                if (is_capital(rule_char)){
+                    if (std::find(extract_rule_symbols().begin(),extract_rule_symbols().end(),std::string(1,rule_char))==extract_rule_symbols().end()){
+                        std::cerr<<rule_char<<" has no member."<<std::endl;
+                        exit(-1);
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 void TopDownParser::start_parsing(){
     TopDownParser::ParsingState* new_state=TopDownParser::ParsingState::new_parsing_state();
@@ -129,7 +171,7 @@ void TopDownParser::start_parsing(){
 
 void TopDownParser::extend(std::string non_terminal, unsigned int num_of_alternative){
     if (num_of_alternative>=rules[non_terminal].size()){
-        if (non_terminal=="S"){
+        if (list_of_states[list_of_states.size()-1]->beta=="S"){
             std::cerr<<"The input word is not an element of the given language"<<std::endl;
             std::cerr<<"Program exits..."<<std::endl;
             exit(-1);
@@ -138,6 +180,7 @@ void TopDownParser::extend(std::string non_terminal, unsigned int num_of_alterna
     }
 
     TopDownParser::ParsingState* new_state=TopDownParser::ParsingState::copy(list_of_states[list_of_states.size()-1]);
+    list_of_states[list_of_states.size()-1]->symbol_alternative=num_of_alternative;
     new_state->alpha.push(non_terminal + std::to_string(num_of_alternative));
     new_state->beta.erase(0,1);
     new_state->beta=rules[non_terminal][num_of_alternative] + new_state->beta;
@@ -146,32 +189,76 @@ void TopDownParser::extend(std::string non_terminal, unsigned int num_of_alterna
 
     list_of_states.push_back(new_state);
     std::cerr<<non_terminal<<" was extended to the "<<num_of_alternative<<" alternative"<<std::endl;
+    list_of_states[list_of_states.size()-1]->print_instance_to_std_err();
     match_input();
 
 }
 
 
 void TopDownParser::match_input(){
-    if (list_of_states[list_of_states.size()-1]->beta[0]==std::toupper(list_of_states[list_of_states.size()-1]->beta[0])){
-        std::cerr<<"While matching input the first char of beta was non-terminal >> extending further..."<<std::endl;
-        extend(std::string(1,list_of_states[list_of_states.size()-1]->beta[0]),0);
-    }
-
-    if (list_of_states[list_of_states.size()-1]->beta.length()>input_word.length()){
+    std::cout<<"processed word length: "<<list_of_states[list_of_states.size()-1]->beta.length() + list_of_states[list_of_states.size()-1]->i<<std::endl;
+    std::cout<<"input word length: "<<input_word.length()<<std::endl;
+    if (list_of_states[list_of_states.size()-1]->beta.length() + list_of_states[list_of_states.size()-1]->i > input_word.length()){
         std::cerr<<"While matching the input the length of beta was bigger than the input word's length >> backtrack in the input..."<<std::endl;
+        list_of_states[list_of_states.size()-1]->print_instance_to_std_err();
         backtrack_in_input();
     }
-
-    if (list_of_states[list_of_states.size()-1]->beta[0]==input_word[list_of_states[list_of_states.size()-1]->i]){
+    else if (is_capital(list_of_states[list_of_states.size()-1]->beta[0])){
+        std::cerr<<"While matching input the first char of beta was non-terminal >> extending further..."<<std::endl;
+        list_of_states[list_of_states.size()-1]->print_instance_to_std_err();
+        extend(std::string(1,list_of_states[list_of_states.size()-1]->beta[0]),0);
+    }
+    else if (list_of_states[list_of_states.size()-1]->beta[0]==input_word[list_of_states[list_of_states.size()-1]->i]){
+        std::cerr<<"Succesful matching"<<std::endl;
         successful_matching();
 
-    } else {
+    } 
+    else if (list_of_states[list_of_states.size()-1]->beta[0]!=input_word[list_of_states[list_of_states.size()-1]->i]) {
         unsuccessful_matching();
     }
-
-    
 }
 
+
+void TopDownParser::successful_matching(){
+    TopDownParser::ParsingState* ps=TopDownParser::ParsingState::copy(list_of_states[list_of_states.size()-1]);
+    ps->alpha.push(std::string(1,ps->beta[0]));
+    ps->beta.erase(0,1);
+    ps->i+=1;
+    if (ps->i==input_word.length()){
+        std::cout<<"The word is element of the grammar"<<std::endl;
+        // TODO: return the tree here and print out 
+    } else {
+        list_of_states.push_back(ps);
+        match_input();
+    }
+}
+
+
+void TopDownParser::unsuccessful_matching(){
+    std::cerr<<"The matching waws unsuccessful >> backtrack in the input"<<std::endl;
+    list_of_states[list_of_states.size()-1]->print_instance_to_std_err();
+    backtrack_in_input();
+}
+
+void TopDownParser::backtrack_in_input(){
+    unsigned int lvl=list_of_states[list_of_states.size()-1]->level;
+    while (true){
+        if (list_of_states[list_of_states.size()-1]->level < lvl){
+            extend(std::string(1,list_of_states[list_of_states.size()-1]->beta[0]),list_of_states[list_of_states.size()-1]->symbol_alternative+1);
+            break;
+        } else {
+            delete list_of_states[list_of_states.size()-1];
+            list_of_states.resize(list_of_states.size()-1);
+        }
+    }
+}
+
+void TopDownParser::backtrack_in_extension(){
+    delete list_of_states[list_of_states.size()-1];
+    list_of_states.resize(list_of_states.size()-1);
+    extend(std::string(1,list_of_states[list_of_states.size()-1]->beta[0]),list_of_states[list_of_states.size()-1]->symbol_alternative+1);
+
+}
 
 std::vector<std::string> TopDownParser::extract_rule_symbols() const {
     std::vector<std::string> keys;
