@@ -38,11 +38,14 @@ class TopDownParser{
         static ParsingState* new_parsing_state();
         static ParsingState* copy(const ParsingState* ps);
         void print_instance_to_std_err();
+        // TODO: print out the tree in the end
     };
 
     std::vector<char> capitals={'Q','W','E','R','T','Y','U','I','O','P',
                                 'A','S','D','F','G','H','J','K','L','Z','X','C',
                                 'V','B','N','M'};
+
+    
     bool is_capital(char letter);
     
 
@@ -53,7 +56,7 @@ class TopDownParser{
 
 
     std::vector<ParsingState*> list_of_states; // for backtrack purposes
-    
+
     void start_parsing();
     void match_input();
     void extend(std::string non_terminal, unsigned int num_of_alternative);

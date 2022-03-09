@@ -181,10 +181,10 @@ void TopDownParser::extend(std::string non_terminal, unsigned int num_of_alterna
 
     TopDownParser::ParsingState* new_state=TopDownParser::ParsingState::copy(list_of_states[list_of_states.size()-1]);
     list_of_states[list_of_states.size()-1]->symbol_alternative=num_of_alternative;
-    new_state->alpha.push(non_terminal + std::to_string(num_of_alternative));
+    new_state->alpha.push(non_terminal + std::to_string(num_of_alternative+1));
     new_state->beta.erase(0,1);
     new_state->beta=rules[non_terminal][num_of_alternative] + new_state->beta;
-    new_state->level+=1;
+    new_state->level++;
     new_state->symbol_alternative=0;
 
     list_of_states.push_back(new_state);
@@ -223,10 +223,26 @@ void TopDownParser::successful_matching(){
     TopDownParser::ParsingState* ps=TopDownParser::ParsingState::copy(list_of_states[list_of_states.size()-1]);
     ps->alpha.push(std::string(1,ps->beta[0]));
     ps->beta.erase(0,1);
-    ps->i+=1;
+    ps->i++;
     if (ps->i==input_word.length()){
-        std::cout<<"The word is element of the grammar"<<std::endl;
-        // TODO: return the tree here and print out 
+        std::cout<<std::endl<<"The word is element of the grammar"<<std::endl;
+        list_of_states[list_of_states.size()-1]->state=TopDownParser::StateofAnalysis::T;
+        
+        std::cout<<std::endl<<"Parse tree:"<<std::endl;
+        std::vector<std::string> printable_tree;
+        while (!list_of_states[list_of_states.size()-1]->alpha.empty()){
+            if (list_of_states[list_of_states.size()-1]->alpha.top().length()!=1){
+                // building up the parse tree
+                printable_tree.push_back(list_of_states[list_of_states.size()-1]->alpha.top());
+
+            }
+            list_of_states[list_of_states.size()-1]->alpha.pop();
+        }
+
+        for (int i=printable_tree.size()-1;i>=0;i--){
+            std::cout<<printable_tree[i];
+        }
+        std::cout<<std::endl;
     } else {
         list_of_states.push_back(ps);
         match_input();
@@ -244,6 +260,7 @@ void TopDownParser::backtrack_in_input(){
     unsigned int lvl=list_of_states[list_of_states.size()-1]->level;
     while (true){
         if (list_of_states[list_of_states.size()-1]->level < lvl){
+            list_of_states[list_of_states.size()-1]->state=TopDownParser::StateofAnalysis::B;
             extend(std::string(1,list_of_states[list_of_states.size()-1]->beta[0]),list_of_states[list_of_states.size()-1]->symbol_alternative+1);
             break;
         } else {
