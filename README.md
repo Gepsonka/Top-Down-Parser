@@ -20,5 +20,10 @@ The input format has to keep the followind rules:
 
 In the base directory run: ```./main```
 
+### Other
+
+If you do not want to see the whole log, direct the error log into a file with :command: 2> :file_name:
+This way you will see mininmal output.
+
 
 *written and tested for linux*
