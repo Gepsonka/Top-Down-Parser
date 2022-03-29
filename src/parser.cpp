@@ -98,7 +98,10 @@ void TopDownParser::read_rules(const std::string &raw_rules){
     for (int i=0;i<raw_rules.length();++i){
         if (raw_rules[i]=='>'){
             after_arrow=true;
-        } 
+        }
+        else if(raw_rules[i]=='-'){
+            continue;
+        }
         else if (raw_rules[i]==' '){
             rules[curr_symbol].push_back(curr_rule);
             curr_rule=curr_symbol="";
